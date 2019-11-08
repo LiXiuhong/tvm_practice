@@ -1,0 +1,57 @@
+// attr [compute(Apad, 0x560b542da680)] realize_scope = ""
+realize Apad([0, 16], [0, 16], [0, 256], [0, 256]) {
+  produce Apad {
+    for (yy, 0, 16) {
+      for (xx, 0, 16) {
+        for (cc, 0, 256) {
+          for (nn, 0, 256) {
+            Apad(yy, xx, cc, nn) =tvm_if_then_else(((((yy >= 1) && ((yy - 1) < 14)) && (xx >= 1)) && ((xx - 1) < 14)), A((yy - 1), (xx - 1), cc, nn), 0f)
+          }
+        }
+      }
+    }
+  }
+  // attr [compute(B, 0x560b542db900)] realize_scope = ""
+  realize B([0, 14], [0, 14], [0, 512], [0, 256]) {
+    produce B {
+      for (yy, 0, 14) {
+        for (xx, 0, 14) {
+          for (ff, 0, 512) {
+            for (nn, 0, 256) {
+              B(yy, xx, ff, nn) =0f
+              for (ry, 0, 3) {
+                for (rx, 0, 3) {
+                  for (rc, 0, 256) {
+                    B(yy, xx, ff, nn) =(B(yy, xx, ff, nn) + (Apad((yy + ry), (xx + rx), rc, nn)*W(ry, rx, rc, ff)))
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// attr [compute(B, 0x5556cc1b8df0)] realize_scope = ""
+realize B([0, 14], [0, 14], [0, 512], [0, 256]) {
+  produce B {
+    for (yy, 0, 14) {
+      for (xx, 0, 14) {
+        for (ff, 0, 512) {
+          for (nn, 0, 256) {
+            B(yy, xx, ff, nn) =0f
+            for (ry, 0, 3) {
+              for (rx, 0, 3) {
+                for (rc, 0, 256) {
+                  B(yy, xx, ff, nn) =(B(yy, xx, ff, nn) + (tvm_if_then_else((((((yy + ry) >= 1) && (((yy + ry) - 1) < 14)) && ((xx + rx) >= 1)) && (((xx + rx) - 1) < 14)), A(((yy + ry) - 1), ((xx + rx) - 1), rc, nn), 0f)*W(ry, rx, rc, ff)))
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

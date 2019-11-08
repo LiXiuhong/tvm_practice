@@ -1,0 +1,93 @@
+// attr [compute(B.global, 0x55c25f411b90)] realize_scope = "global"
+realize B.global([0, 14], [0, 14], [0, 512], [0, 256]) {
+  produce B.global {
+    for (yy.c, 0, 14) {
+      for (xx.c, 0, 14) {
+        for (ff.c, 0, 512) {
+          for (nn.c, 0, 256) {
+            B.global(yy.c, xx.c, ff.c, nn.c) =0f
+            for (ry, 0, 3) {
+              for (rx, 0, 3) {
+                for (rc, 0, 256) {
+                  B.global(yy.c, xx.c, ff.c, nn.c) =(B.global(yy.c, xx.c, ff.c, nn.c) + (tvm_if_then_else((((((yy.c + ry) >= 1) && (((yy.c + ry) - 1) < 14)) && ((xx.c + rx) >= 1)) && (((xx.c + rx) - 1) < 14)), A(((yy.c + ry) - 1), ((xx.c + rx) - 1), rc, nn.c), 0f)*W(ry, rx, rc, ff.c)))
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+  // attr [compute(B, 0x55c25f3dff90)] realize_scope = ""
+  realize B([0, 14], [0, 14], [0, 512], [0, 256]) {
+    produce B {
+      for (yy, 0, 14) {
+        for (xx, 0, 14) {
+          for (ff, 0, 512) {
+            for (nn, 0, 256) {
+              B(yy, xx, ff, nn) =B.global(yy, xx, ff, nn)
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// attr [compute(B, 0x55b0184c2bf0)] realize_scope = ""
+realize B([0, 14], [0, 14], [0, 512], [0, 256]) {
+  produce B {
+    for (yy, 0, 14) {
+      for (xx, 0, 14) {
+        for (ff, 0, 512) {
+          for (nn, 0, 256) {
+            // attr [compute(B.global, 0x55b0184f47f0)] realize_scope = "global"
+            realize B.global([yy, 1], [xx, 1], [ff, 1], [nn, 1]) {
+              produce B.global {
+                B.global(yy, xx, ff, nn) =0f
+                for (ry, 0, 3) {
+                  for (rx, 0, 3) {
+                    for (rc, 0, 256) {
+                      B.global(yy, xx, ff, nn) =(B.global(yy, xx, ff, nn) + (tvm_if_then_else((((((yy + ry) >= 1) && (((yy + ry) - 1) < 14)) && ((xx + rx) >= 1)) && (((xx + rx) - 1) < 14)), A(((yy + ry) - 1), ((xx + rx) - 1), rc, nn), 0f)*W(ry, rx, rc, ff)))
+                    }
+                  }
+                }
+              }
+              B(yy, xx, ff, nn) =B.global(yy, xx, ff, nn)
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// attr [compute(B, 0x562833cf3bf0)] realize_scope = ""
+realize B([0, 14], [0, 14], [0, 512], [0, 256]) {
+  produce B {
+    for (yy, 0, 14) {
+      for (xx, 0, 14) {
+        for (ff, 0, 512) {
+          // attr [compute(B.global, 0x562833d257f0)] realize_scope = "global"
+          realize B.global([yy, 1], [xx, 1], [ff, 1], [0, 256]) {
+            produce B.global {
+              for (nn.c, 0, 256) {
+                B.global(yy, xx, ff, nn.c) =0f
+                for (ry, 0, 3) {
+                  for (rx, 0, 3) {
+                    for (rc, 0, 256) {
+                      B.global(yy, xx, ff, nn.c) =(B.global(yy, xx, ff, nn.c) + (tvm_if_then_else((((((yy + ry) >= 1) && (((yy + ry) - 1) < 14)) && ((xx + rx) >= 1)) && (((xx + rx) - 1) < 14)), A(((yy + ry) - 1), ((xx + rx) - 1), rc, nn.c), 0f)*W(ry, rx, rc, ff)))
+                    }
+                  }
+                }
+              }
+            }
+            for (nn, 0, 256) {
+              B(yy, xx, ff, nn) =B.global(yy, xx, ff, nn)
+            }
+          }
+        }
+      }
+    }
+  }
+}
