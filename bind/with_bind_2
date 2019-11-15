@@ -1,0 +1,78 @@
+// attr [Apad.shared] storage_scope = "shared"
+allocate Apad.shared[float32 * 589824]
+// attr [Apad.shared.local] storage_scope = "local"
+allocate Apad.shared.local[float32 * 589824]
+// attr [W.shared.local] storage_scope = "local"
+allocate W.shared.local[float32 * 147456]
+// attr [B.local] storage_scope = "local"
+allocate B.local[float32 * 16384]
+produce Apad.shared {
+  for (ax0, 0, 3) {
+    for (ax1, 0, 3) {
+      for (ax2, 0, 256) {
+        for (ax3, 0, 256) {
+          Apad.shared[((((ax0*196608) + (ax1*65536)) + (ax2*256)) + ax3)] = tvm_if_then_else(((((1 <= ((blockIdx.z/14) + ax0)) && (((blockIdx.z/14) + ax0) < 15)) && (1 <= (ax1 + (blockIdx.z % 14)))) && ((ax1 + (blockIdx.z % 14)) < 15)), A[((((((ax0*917504) + (blockIdx.z*65536)) + (ax1*65536)) + (ax2*256)) + ax3) - 983040)], 0f)
+        }
+      }
+    }
+  }
+}
+produce Apad.shared.local {
+  for (ax0, 0, 3) {
+    for (ax1, 0, 3) {
+      for (ax2, 0, 256) {
+        for (ax3, 0, 256) {
+          Apad.shared.local[((((ax0*196608) + (ax1*65536)) + (ax2*256)) + ax3)] = Apad.shared[((((ax0*196608) + (ax1*65536)) + (ax2*256)) + ax3)]
+        }
+      }
+    }
+  }
+}
+produce W.shared {
+  for (ax0, 0, 3) {
+    for (ax1, 0, 3) {
+      for (ax2, 0, 256) {
+        for (ax3, 0, 64) {
+          Apad.shared[((((ax0*49152) + (ax1*16384)) + (ax2*64)) + ax3)] = W[(((((ax0*393216) + (ax1*131072)) + (ax2*512)) + (blockIdx.y*64)) + ax3)]
+        }
+      }
+    }
+  }
+}
+produce W.shared.local {
+  for (ax0, 0, 3) {
+    for (ax1, 0, 3) {
+      for (ax2, 0, 256) {
+        for (ax3, 0, 64) {
+          W.shared.local[((((ax0*49152) + (ax1*16384)) + (ax2*64)) + ax3)] = Apad.shared[((((ax0*49152) + (ax1*16384)) + (ax2*64)) + ax3)]
+        }
+      }
+    }
+  }
+}
+produce B.local {
+  for (ff.c, 0, 64) {
+    for (nn.c, 0, 256) {
+      B.local[((ff.c*256) + nn.c)] = 0f
+      for (ry, 0, 3) {
+        for (rx, 0, 3) {
+          for (rc, 0, 256) {
+            B.local[((ff.c*256) + nn.c)] = (B.local[((ff.c*256) + nn.c)] + (Apad.shared.local[((((ry*196608) + (rx*65536)) + (rc*256)) + nn.c)]*W.shared.local[((((ry*49152) + (rx*16384)) + (rc*64)) + ff.c)]))
+          }
+        }
+      }
+    }
+  }
+}
+produce B {
+  // attr [iter_var(blockIdx.z, , blockIdx.z)] thread_extent = 196
+  // attr [iter_var(blockIdx.y, , blockIdx.y)] thread_extent = 8
+  for (ff.inner, 0, 64) {
+    for (nn.outer, 0, 4) {
+      for (nn.inner, 0, 64) {
+        B[(((((blockIdx.z*131072) + (blockIdx.y*16384)) + (ff.inner*256)) + (nn.outer*64)) + nn.inner)] = B.local[(((ff.inner*256) + (nn.outer*64)) + nn.inner)]
+      }
+    }
+  }
+}
+

@@ -5,13 +5,6 @@ stmt = schedule.ScheduleOps(sch, bounds)
 print(stmt)
 
 print(tvm.lower(s, [A, W, B], simple_mode=True))
-
-if tgt == "cuda" or tgt == "rocm" or tgt.startswith('opencl'):
-    dev_module = fadd.imported_modules[0]
-    print("-----GPU code-----")
-    print(dev_module.get_source())
-else:
-    print(fadd.get_source())
 '''
 import numpy as np
 import tvm
@@ -75,15 +68,13 @@ B = tvm.compute(
 
 # Designate the memory hierarchy
 s = tvm.create_schedule(B.op)
-#s[Apad].compute_inline() # compute Apad inline
+s[Apad].compute_inline() # compute Apad inline
 AA = s.cache_read(Apad, 'shared', [B])
 WW = s.cache_read(W, "shared", [B])
 AL = s.cache_read(AA, "local", [B])
 WL = s.cache_read(WW, "local", [B])
 BL = s.cache_write(B, "local")
 
-print(tvm.lower(s, [A, W, B], simple_mode=True))
-exit()
 
 ###############################################################################
 # Blocking
@@ -130,6 +121,7 @@ s[B].bind(bz, block_z)
 s[B].bind(by, block_y)
 s[B].bind(bx, block_x)
 
+
 ###############################################################################
 # Virtual Thread Split
 # --------------------
@@ -156,6 +148,7 @@ s[B].bind(txz, thread_xz)
 s[B].bind(ty, thread_y)
 s[B].bind(tx, thread_x)
 
+
 ###############################################################################
 # Cooperative Fetching
 # --------------------
@@ -169,6 +162,8 @@ s[B].bind(tx, thread_x)
 
 # Schedule BL local write
 s[BL].compute_at(s[B], tx)
+print(tvm.lower(s, [A, W, B], simple_mode=True))
+exit()
 yi, xi, fi, ni = s[BL].op.axis
 ry, rx, rc = s[BL].op.reduce_axis
 rco, rci = s[BL].split(rc, factor=step)

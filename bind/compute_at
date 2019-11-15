@@ -1,0 +1,82 @@
+// attr [Apad.shared] storage_scope = "shared"
+allocate Apad.shared[float32 * 9216]
+// attr [Apad.shared.local] storage_scope = "local"
+allocate Apad.shared.local[float32 * 9216]
+// attr [W.shared.local] storage_scope = "local"
+allocate W.shared.local[float32 * 9216]
+produce Apad.shared {
+  for (ax0, 0, 3) {
+    for (ax1, 0, 3) {
+      for (ax2, 0, 256) {
+        for (ax3, 0, 4) {
+          Apad.shared[((((ax0*3072) + (ax1*1024)) + (ax2*4)) + ax3)] = tvm_if_then_else(((((1 <= ((blockIdx.z/14) + ax0)) && (((blockIdx.z/14) + ax0) < 15)) && (1 <= (ax1 + (blockIdx.z % 14)))) && ((ax1 + (blockIdx.z % 14)) < 15)), A[(((((((((ax0*917504) + (blockIdx.z*65536)) + (ax1*65536)) + (ax2*256)) + (blockIdx.x*64)) + (vx*32)) + (threadIdx.x*4)) + ax3) - 983040)], 0f)
+        }
+      }
+    }
+  }
+}
+produce Apad.shared.local {
+  for (ax0, 0, 3) {
+    for (ax1, 0, 3) {
+      for (ax2, 0, 256) {
+        for (ax3, 0, 4) {
+          Apad.shared.local[((((ax0*3072) + (ax1*1024)) + (ax2*4)) + ax3)] = Apad.shared[((((ax0*3072) + (ax1*1024)) + (ax2*4)) + ax3)]
+        }
+      }
+    }
+  }
+}
+produce W.shared {
+  for (ax0, 0, 3) {
+    for (ax1, 0, 3) {
+      for (ax2, 0, 256) {
+        for (ax3, 0, 4) {
+          Apad.shared[((((ax0*3072) + (ax1*1024)) + (ax2*4)) + ax3)] = W[(((((((ax0*393216) + (ax1*131072)) + (ax2*512)) + (blockIdx.y*64)) + (vy*32)) + (threadIdx.y*4)) + ax3)]
+        }
+      }
+    }
+  }
+}
+produce W.shared.local {
+  for (ax0, 0, 3) {
+    for (ax1, 0, 3) {
+      for (ax2, 0, 256) {
+        for (ax3, 0, 4) {
+          W.shared.local[((((ax0*3072) + (ax1*1024)) + (ax2*4)) + ax3)] = Apad.shared[((((ax0*3072) + (ax1*1024)) + (ax2*4)) + ax3)]
+        }
+      }
+    }
+  }
+}
+produce B {
+  // attr [iter_var(blockIdx.z, , blockIdx.z)] thread_extent = 196
+  // attr [B.local] storage_scope = "local"
+  allocate B.local[float32 * 16]
+  // attr [iter_var(blockIdx.y, , blockIdx.y)] thread_extent = 8
+  // attr [iter_var(blockIdx.x, , blockIdx.x)] thread_extent = 4
+  // attr [iter_var(threadIdx.y, range(min=0, ext=8), threadIdx.y)] thread_extent = 8
+  // attr [iter_var(threadIdx.x, range(min=0, ext=8), threadIdx.x)] thread_extent = 8
+  produce B.local {
+    for (ff.c, 0, 4) {
+      for (nn.c, 0, 4) {
+        B.local[((ff.c*4) + nn.c)] = 0f
+        for (ry, 0, 3) {
+          for (rx, 0, 3) {
+            for (rc, 0, 256) {
+              B.local[((ff.c*4) + nn.c)] = (B.local[((ff.c*4) + nn.c)] + (Apad.shared.local[((((ry*3072) + (rx*1024)) + (rc*4)) + nn.c)]*W.shared.local[((((ry*3072) + (rx*1024)) + (rc*4)) + ff.c)]))
+            }
+          }
+        }
+      }
+    }
+  }
+  for (ff.inner.inner.inner, 0, 4) {
+    for (nn.inner.inner.inner, 0, 4) {
+      B[(((((((blockIdx.z*131072) + (blockIdx.y*16384)) + (threadIdx.y*1024)) + (ff.inner.inner.inner*256)) + (blockIdx.x*64)) + (threadIdx.x*4)) + nn.inner.inner.inner)] = B.local[((ff.inner.inner.inner*4) + nn.inner.inner.inner)]
+      B[((((((((blockIdx.z*131072) + (blockIdx.y*16384)) + (threadIdx.y*1024)) + (ff.inner.inner.inner*256)) + (blockIdx.x*64)) + (threadIdx.x*4)) + nn.inner.inner.inner) + 8192)] = B.local[((ff.inner.inner.inner*4) + nn.inner.inner.inner)]
+      B[((((((((blockIdx.z*131072) + (blockIdx.y*16384)) + (threadIdx.y*1024)) + (ff.inner.inner.inner*256)) + (blockIdx.x*64)) + (threadIdx.x*4)) + nn.inner.inner.inner) + 32)] = B.local[((ff.inner.inner.inner*4) + nn.inner.inner.inner)]
+      B[((((((((blockIdx.z*131072) + (blockIdx.y*16384)) + (threadIdx.y*1024)) + (ff.inner.inner.inner*256)) + (blockIdx.x*64)) + (threadIdx.x*4)) + nn.inner.inner.inner) + 8224)] = B.local[((ff.inner.inner.inner*4) + nn.inner.inner.inner)]
+    }
+  }
+}
+
